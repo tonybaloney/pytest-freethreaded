@@ -2,7 +2,7 @@ import pytest
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import threading
-from itertools import repeat
+from itertools import chain, repeat
 from typing import Union
 
 import logging
@@ -77,10 +77,16 @@ def pytest_runtest_call(item: pytest.Item):
     iterations = item.config.option.iterations
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
-    barrier = threading.Barrier(threads)
+    last_round = iterations % threads
+    last_barrier = threading.Barrier(last_round) if last_round else None
     results = list(
         executor.map(
-            get_one_result, repeat(item, iterations), repeat(barrier, iterations)
+            get_one_result,
+            repeat(item, iterations),
+            chain(
+                repeat(barrier, iterations - last_round),
+                repeat(last_barrier, last_round),
+            ),
         )
     )
     exceptions = [r for r in results if isinstance(r, Exception)]
