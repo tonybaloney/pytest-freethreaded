@@ -17,5 +17,5 @@ flit install -s
 To run the tests
 
 ```bash
-pytest
+pytest -vvvv --log-level=DEBUG
 ```
