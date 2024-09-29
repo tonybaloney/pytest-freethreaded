@@ -25,6 +25,17 @@ def pytest_addoption(parser: pytest.Parser):
     )
 
 
+def pytest_configure(config: pytest.Config):
+    config.addinivalue_line(
+        name="markers",
+        line="threads(n): Run test in a threadpool with (n) max threads.",
+    )
+
+    config.addinivalue_line(
+        name="markers", line="iterations(n): Repeat test (n) times inside a threadpool."
+    )
+
+
 @pytest.hookimpl
 def pytest_sessionstart(session):
     # See https://docs.pytest.org/en/7.1.x/reference/reference.html#pytest.hookspec.pytest_sessionstart
