@@ -3,7 +3,6 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from itertools import chain, repeat
-from typing import Union
 
 import logging
 
@@ -58,7 +57,7 @@ class ConcurrencyError(Exception):
 
 def get_one_result(
     item: pytest.Item, barrier: threading.Barrier
-) -> Union[None, Exception]:
+) -> None | Exception:
     try:
         barrier.wait()
         return item.runtest()
