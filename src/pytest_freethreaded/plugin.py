@@ -2,6 +2,7 @@ import pytest
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import threading
+from itertools import repeat
 
 import logging
 
@@ -14,7 +15,25 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default=10,
         type=int,
-        help="Number of threads to run the rest on",
+        help="Number of threads to run the tests on",
+    )
+    parser.addoption(
+        "--iterations",
+        action="store",
+        default=200,
+        type=int,
+        help="Number of iterations to run the tests for",
+    )
+
+
+def pytest_configure(config: pytest.Config):
+    config.addinivalue_line(
+        name="markers",
+        line="threads(n): Run test in a threadpool with (n) max threads.",
+    )
+
+    config.addinivalue_line(
+        name="markers", line="iterations(n): Repeat test (n) times inside a threadpool."
     )
 
 
@@ -31,7 +50,13 @@ def pytest_sessionfinish(session):
 
 
 class ConcurrencyError(Exception):
-    pass
+    def __init__(self, iterations: int, failures: int, threads: int):
+        self.iterations = iterations
+        self.failures = failures
+        self.threads = threads
+
+    def __str__(self):
+        return f"{self.failures} failures in {self.iterations} iterations across {self.threads} threads"
 
 
 def get_one_result(item: pytest.Item, barrier: threading.Barrier):
@@ -46,18 +71,19 @@ def get_one_result(item: pytest.Item, barrier: threading.Barrier):
 def pytest_runtest_call(item: pytest.Item):
     # Try item.runtest()
     threads = item.config.option.threads
-    iterations = 200
-    assert iterations % threads == 0
+    iterations = item.config.option.iterations
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
     barrier = threading.Barrier(threads)
-    results = list(executor.map(get_one_result, [item] * iterations, [barrier] * iterations))
-    exceptions = [isinstance(r, Exception) for r in results]
-    if all(exceptions):
-        raise results[0]
-    if all(not e for e in exceptions):
+    results = list(executor.map(get_one_result, repeat(item, iterations), repeat(barrier, iterations)))
+    exceptions = [r for r in results if isinstance(r, Exception)]
+    if not exceptions:
         return results[0]
-    raise ConcurrencyError() from next(r for r in results if isinstance(r, Exception))
+    if len(exceptions) == len(results):
+        raise results[0]
+    raise ConcurrencyError(
+        iterations=iterations, failures=len(exceptions), threads=threads
+    ) from exceptions[0]
 
 
 # @pytest.hookimpl
