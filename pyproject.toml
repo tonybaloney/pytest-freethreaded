@@ -4,7 +4,7 @@ description = "pytest plugin for running parallel tests"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "PyCon JP 2024 Team"}]
-requires-python = ">=3.7"
+requires-python = ">=3.13"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pytest",
@@ -27,7 +27,7 @@ dependencies = [ "pytest" ]
 Home = "https://github.com/tonybaloney/pytest-freethreaded"
 
 [project.entry-points.pytest11]
-freethreaded = "pytest_freethreaded"
+freethreaded = "pytest_freethreaded.plugin"
 
 [build-system]
 requires = ["flit_core >= 3.4"]
