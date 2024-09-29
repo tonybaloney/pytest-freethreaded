@@ -1,12 +1,11 @@
 import pytest
+import sys
 
 
 @pytest.hookimpl
 def pytest_sessionstart(session):
     # See https://docs.pytest.org/en/7.1.x/reference/reference.html#pytest.hookspec.pytest_sessionstart
-
-    # TODO: Assert that the GIL is disabled
-    ...
+    assert sys.__is_gil_enabled() == False
 
 @pytest.hookimpl
 def pytest_sessionfinish(session):
