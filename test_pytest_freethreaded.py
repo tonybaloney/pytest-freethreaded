@@ -1,3 +1,2 @@
-def test_something():
-    assert True
-    
+def test_import_warning():
+   import markupsafe
