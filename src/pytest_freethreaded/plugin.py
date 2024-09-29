@@ -38,7 +38,13 @@ def pytest_sessionfinish(session):
 
 
 class ConcurrencyError(Exception):
-    pass
+    def __init__(self, iterations: int, failures: int, threads: int):
+        self.iterations = iterations
+        self.failures = failures
+        self.threads = threads
+
+    def __str__(self):
+        return f"{self.failures} failures in {self.iterations} iterations across {self.threads} threads"
 
 
 def get_one_result(item: pytest.Item):
@@ -56,12 +62,14 @@ def pytest_runtest_call(item: pytest.Item):
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
     results = list(executor.map(get_one_result, repeat(item, iterations)))
-    exceptions = [isinstance(r, Exception) for r in results]
-    if all(exceptions):
-        raise results[0]
-    if all(not e for e in exceptions):
+    exceptions = [r for r in results if isinstance(r, Exception)]
+    if not exceptions:
         return results[0]
-    raise ConcurrencyError() from next(r for r in results if isinstance(r, Exception))
+    if len(exceptions) == len(results):
+        raise results[0]
+    raise ConcurrencyError(
+        iterations=iterations, failures=len(exceptions), threads=threads
+    ) from exceptions[0]
 
 
 # @pytest.hookimpl
