@@ -29,11 +29,7 @@ def pytest_addoption(parser: pytest.Parser):
 def pytest_configure(config: pytest.Config):
     config.addinivalue_line(
         name="markers",
-        line="threads(n): Run test in a threadpool with (n) max threads.",
-    )
-
-    config.addinivalue_line(
-        name="markers", line="iterations(n): Repeat test (n) times inside a threadpool."
+        line="freethreaded(threads=n, iterations=m): Run test (m) times, in a threadpool of (n) threads",
     )
 
 
@@ -70,12 +66,25 @@ def get_one_result(item: pytest.Item, barrier: threading.Barrier):
 @pytest.hookimpl()
 def pytest_runtest_call(item: pytest.Item):
     # Try item.runtest()
-    threads = item.config.option.threads
-    iterations = item.config.option.iterations
+    config_threads = item.config.option.threads
+    config_iterations = item.config.option.iterations
+    freethreaded_mark = item.get_closest_marker(name="freethreaded")
+
+    if freethreaded_mark:
+        threads = freethreaded_mark.kwargs.get("threads", config_threads)
+        iterations = freethreaded_mark.kwargs.get("iterations", config_iterations)
+    else:
+        iterations = config_iterations
+        threads = config_threads
+
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
     barrier = threading.Barrier(threads)
-    results = list(executor.map(get_one_result, repeat(item, iterations), repeat(barrier, iterations)))
+    results = list(
+        executor.map(
+            get_one_result, repeat(item, iterations), repeat(barrier, iterations)
+        )
+    )
     exceptions = [r for r in results if isinstance(r, Exception)]
     if not exceptions:
         return results[0]
