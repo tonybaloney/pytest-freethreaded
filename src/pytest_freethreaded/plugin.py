@@ -1,6 +1,7 @@
 import pytest
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 
 import logging
 
@@ -13,7 +14,14 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default=10,
         type=int,
-        help="Number of threads to run the rest on",
+        help="Number of threads to run the tests on",
+    )
+    parser.addoption(
+        "--iterations",
+        action="store",
+        default=200,
+        type=int,
+        help="Number of iterations to run the tests for",
     )
 
 
@@ -44,9 +52,10 @@ def get_one_result(item: pytest.Item):
 def pytest_runtest_call(item: pytest.Item):
     # Try item.runtest()
     threads = item.config.option.threads
+    iterations = item.config.option.iterations
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
-    results = list(executor.map(get_one_result, [item] * 200))
+    results = list(executor.map(get_one_result, repeat(item, iterations)))
     exceptions = [isinstance(r, Exception) for r in results]
     if all(exceptions):
         raise results[0]
