@@ -6,6 +6,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def pytest_addoption(parser: pytest.Parser):
+    parser.addoption(
+        "--threads",
+        action="store",
+        default=10,
+        type=int,
+        help="Number of threads to run the rest on",
+    )
+
+
 @pytest.hookimpl
 def pytest_sessionstart(session):
     # See https://docs.pytest.org/en/7.1.x/reference/reference.html#pytest.hookspec.pytest_sessionstart
@@ -17,6 +28,7 @@ def pytest_sessionfinish(session):
     # See https://docs.pytest.org/en/7.1.x/reference/reference.html#pytest.hookspec.pytest_sessionfinish
     ...
 
+
 def get_one_result(item: pytest.Item):
     try:
         return item.runtest()
@@ -24,21 +36,25 @@ def get_one_result(item: pytest.Item):
         return e
 
 
-@pytest.hookimpl
+@pytest.hookimpl()
 def pytest_runtest_call(item: pytest.Item):
     # Try item.runtest()
+    threads = item.config.option.threads
     logger.debug("Running test %s", item.name)
-    executor = ThreadPoolExecutor(max_workers=20)
+    executor = ThreadPoolExecutor(max_workers=threads)
     results = list(executor.map(get_one_result, [item] * 200))
     exceptions = [isinstance(r, Exception) for r in results]
     if all(exceptions):
-       raise results[0]
+        raise results[0]
     if all(not e for e in exceptions):
-       return results[0]
-    raise Exception("Result discrepancy") from next(r for r in results if isinstance(r, Exception))
+        return results[0]
+    raise Exception("Result discrepancy") from next(
+        r for r in results if isinstance(r, Exception)
+    )
 
-#@pytest.hookimpl
-#def pytest_pyfunc_call(pyfuncitem: pytest.Function):
+
+# @pytest.hookimpl
+# def pytest_pyfunc_call(pyfuncitem: pytest.Function):
 #    logger.debug("Running function %s", pyfuncitem.name)
 #    XXX: Fails on test functions that take arguments
 #    return pyfuncitem.function()
