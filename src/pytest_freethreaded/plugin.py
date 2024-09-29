@@ -29,6 +29,10 @@ def pytest_sessionfinish(session):
     ...
 
 
+class ConcurrencyError(Exception):
+    pass
+
+
 def get_one_result(item: pytest.Item):
     try:
         return item.runtest()
@@ -48,9 +52,7 @@ def pytest_runtest_call(item: pytest.Item):
         raise results[0]
     if all(not e for e in exceptions):
         return results[0]
-    raise Exception("Result discrepancy") from next(
-        r for r in results if isinstance(r, Exception)
-    )
+    raise ConcurrencyError() from next(r for r in results if isinstance(r, Exception))
 
 
 # @pytest.hookimpl
