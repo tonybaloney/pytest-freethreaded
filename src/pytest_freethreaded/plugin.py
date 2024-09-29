@@ -3,6 +3,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from itertools import repeat
+from typing import Union
 
 import logging
 
@@ -59,7 +60,9 @@ class ConcurrencyError(Exception):
         return f"{self.failures} failures in {self.iterations} iterations across {self.threads} threads"
 
 
-def get_one_result(item: pytest.Item, barrier: threading.Barrier):
+def get_one_result(
+    item: pytest.Item, barrier: threading.Barrier
+) -> Union[None, Exception]:
     try:
         barrier.wait()
         return item.runtest()
@@ -75,7 +78,11 @@ def pytest_runtest_call(item: pytest.Item):
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
     barrier = threading.Barrier(threads)
-    results = list(executor.map(get_one_result, repeat(item, iterations), repeat(barrier, iterations)))
+    results = list(
+        executor.map(
+            get_one_result, repeat(item, iterations), repeat(barrier, iterations)
+        )
+    )
     exceptions = [r for r in results if isinstance(r, Exception)]
     if not exceptions:
         return results[0]
