@@ -82,6 +82,7 @@ def pytest_runtest_call(item: pytest.Item):
 
     logger.debug("Running test %s", item.name)
     executor = ThreadPoolExecutor(max_workers=threads)
+    barrier = threading.Barrier(threads)
     last_round = iterations % threads
     last_barrier = threading.Barrier(last_round) if last_round else None
     results = list(
