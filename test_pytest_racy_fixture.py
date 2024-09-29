@@ -28,16 +28,19 @@ def common_test_counter(counter):
     assert value == value_after, f"{value} != {value_after}"
 
 
+@pytest.mark.xfail(raises=ConcurrencyError)
 def test_counter(counter):
     common_test_counter(counter)
 
 
 @pytest.mark.freethreaded(threads=20, iterations=180)
+@pytest.mark.xfail(raises=ConcurrencyError)
 def test_counter_with_markers(counter):
     common_test_counter(counter)
 
 
 @pytest.mark.freethreaded(iterations=100)
+@pytest.mark.xfail(raises=ConcurrencyError)
 def test_counter_with_markers_no_threads(counter):
     common_test_counter(counter)
 
