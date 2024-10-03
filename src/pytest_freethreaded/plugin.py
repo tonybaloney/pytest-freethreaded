@@ -15,7 +15,7 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default=10,
         type=int,
-        help="Number of threads to run the tests on",
+        help="Number of threads to run the tests on in parallel",
     )
     parser.addoption(
         "--iterations",
@@ -23,6 +23,12 @@ def pytest_addoption(parser: pytest.Parser):
         default=200,
         type=int,
         help="Number of iterations to run the tests for",
+    )
+    parser.addoption(
+        "--require-gil-disabled",
+        action="store_true",
+        type=bool,
+        help="Requires Python to be run with the GIL disabled, otherwise just issues a warning",
     )
 
 
@@ -36,13 +42,10 @@ def pytest_configure(config: pytest.Config):
 @pytest.hookimpl
 def pytest_sessionstart(session):
     # See https://docs.pytest.org/en/7.1.x/reference/reference.html#pytest.hookspec.pytest_sessionstart
-    assert not sys._is_gil_enabled()
-
-
-@pytest.hookimpl
-def pytest_sessionfinish(session):
-    # See https://docs.pytest.org/en/7.1.x/reference/reference.html#pytest.hookspec.pytest_sessionfinish
-    ...
+    if session.config.option.require_gil_disabled:
+        assert not sys._is_gil_enabled(), "GIL is enabled, but --require-gil-disabled is set"
+    elif sys._is_gil_enabled():
+        logger.warning("GIL is enabled, so tests will not be run truly in parallel")
 
 
 class ConcurrencyError(Exception):
@@ -102,10 +105,3 @@ def pytest_runtest_call(item: pytest.Item):
     raise ConcurrencyError(
         iterations=iterations, failures=len(exceptions), threads=threads
     ) from exceptions[0]
-
-
-# @pytest.hookimpl
-# def pytest_pyfunc_call(pyfuncitem: pytest.Function):
-#    logger.debug("Running function %s", pyfuncitem.name)
-#    XXX: Fails on test functions that take arguments
-#    return pyfuncitem.function()
