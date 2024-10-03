@@ -27,7 +27,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--require-gil-disabled",
         action="store_true",
-        type=bool,
         help="Requires Python to be run with the GIL disabled, otherwise just issues a warning",
     )
 

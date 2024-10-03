@@ -73,8 +73,8 @@ Setup:
 ```bash
 python3.13t -m venv .venv
 source .venv/bin/activate
-pip install flit
-flit install -s
+python -m pip install flit
+python -m flit install -s
 ```
 
 ### Testing
