@@ -38,20 +38,20 @@ If a test fails on any of the runs, we will raise a special error called a `Conc
 
 If, during this phase you decide to only run a subset of tests, you can use the `-k` flag to select tests by name. 
 
-Alternatively, you can set the number of threads and the executions using a marker:
+Alternatively, you can set the number of threads and the iterations using a marker:
 
 ```python
 import pytest
 
-@pytest.mark.freethreaded(threads=10, executions=10)
+@pytest.mark.freethreaded(threads=10, iterations=10)
 def test_my_threaded_code():
     pass
 ```
 
-Then on the command-line set the threads and executions to 1:
+Then on the command-line set the threads and iterations to 1:
 
 ```bash
-pytest --threads 1 --executions 1
+pytest --threads 1 --iterations 1
 ```
 
 ### Phase 3: Run your tests with the GIL disabled
