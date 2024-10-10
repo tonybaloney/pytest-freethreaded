@@ -56,7 +56,7 @@ pytest --threads 1 --iterations 1
 
 ### Phase 3: Run your tests with the GIL disabled
 
-If you passed phase 3; congratulations! You can now run your tests with the GIL disabled.
+If you passed phase 2; congratulations! You can now run your tests with the GIL disabled.
 
 We recommend using the `--require-gil-disabled` flag in Pytest for this phase so that if you accidentally run Python 3.13 with the GIL on, it will fail the tests.
 
