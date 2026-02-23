@@ -1,3 +1,6 @@
+> [!WARNING]
+> This repo is no longer being maintained. Check out [pytest-run-parallel](https://github.com/quansight-labs/pytest-run-parallel) for an alternative.
+
 # pytest-freethreaded
 
 A Pytest plugin for helping verify that your tests and libraries are thread-safe with the Python 3.13 experimental `freethreaded` mode.
@@ -97,3 +100,4 @@ This extension was created at PyCon JP sprints with the following team members:
 - Heejun Shin @abel9851
 - Otake Katsuaki
 - Rei Suyama @rhoboro
+
